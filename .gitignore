@@ -1,0 +1,9 @@
+# macOS
+.DS_Store
+
+# Source files and originals (the site uses the processed copies in assets/)
+/gallery photos/
+/drafts/
+/*.png
+/*.mp4
+/*.pdf

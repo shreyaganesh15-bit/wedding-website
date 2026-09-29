@@ -2588,6 +2588,29 @@ body:not(#_) .site-footer .footer-credit {
   font-size: clamp(1.9rem, 1.4rem + 1.6vw, 2.8rem); line-height: 1.2; color: #FFF6E0; margin-top: 34px;
 }
 
+/* the footer line in the section-title font (Agraham), like the headings above it */
+body:not(#_) .site-footer .footer-line {
+  font-family: "Agraham", var(--display); font-weight: 400; font-size-adjust: none; letter-spacing: 0;
+  font-size: min(1.55rem, 6.6vw); line-height: 1.38; color: #FFF6E0; max-width: 21em; margin: 0 auto 28px; text-wrap: balance;
+}
+/* Agraham has no visible apostrophe, so it is borrowed from the body font */
+.footer-line .apos { font-family: var(--serif); }
+@media (min-width: 701px) { body:not(#_) .site-footer .footer-line { font-size: clamp(2.2rem, 1.5rem + 1.5vw, 3rem); } }
+
+/* the footer ornament is a small sikku kolam (dots with a line looping around them) */
+/* a faint kolam on each side of the footer, level with the heading: each is centred on the screen
+   edge (only its inner half shows). They live inside the heading and reach out to the edges. */
+body:not(#_) .site-footer .footer-line { position: relative; }
+.footer-kolam-wrap {
+  position: absolute; top: 50%; z-index: -1; pointer-events: none; overflow: hidden;
+  width: calc(var(--kw) / 2); height: var(--kw); margin-top: calc(var(--kw) / -2);
+}
+.footer-kolam-wrap.is-left { left: calc(50% - 50vw); }
+.footer-kolam-wrap.is-right { right: calc(50% - 50vw); }
+body:not(#_) .site-footer .footer-kolam { display: block; width: var(--kw); max-width: none; height: var(--kw); margin: 0; opacity: .32; }
+.footer-kolam-wrap.is-left .footer-kolam { transform: translateX(-50%); }
+.site-footer { --kw: clamp(130px, 22vw, 300px); }
+
 /* ==========================================================================
    Desktop type audit (701px and up). Sizes below are what the text LOOKS like; Helvetica is
    scaled by font-size-adjust, so the CSS values are larger (css = look / 0.812).

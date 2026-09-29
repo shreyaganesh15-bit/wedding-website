@@ -555,7 +555,8 @@
       const dotsGap = phone ? 16 : 30;                          // gap under the words
       const DOTS = dotsGap + (phone ? 38 : 44);                // + the arrows row
       const room = H - (phone ? 10 : 20) - headBottom;          // breathing room at the bottom
-      const minPad = phone ? 18 : 28;   // space above the circle (below the intro) and above the dots
+      const minPad = phone ? 18 : 28;   // space above the dots
+      const topPad = phone ? 44 : 56;   // space between the intro text and the circle
       // the words under the circle are only a little wider than the circle itself; the circle
       // shrinks when the words need the room (text height depends on its width, so settle twice)
       let med = phone ? Math.min(W * 0.72, 300, H * 0.38) : Math.min(400, H * 0.44);
@@ -563,10 +564,10 @@
       for (let k = 0; k < 2; k++) {
         stage.style.setProperty('--text-w', `${Math.round(Math.max(med * 1.35, phone ? 280 : 340))}px`);
         textH = Math.max(...items.map((li) => li.offsetHeight));
-        med = Math.max(phone ? 150 : 170, Math.min(med, room - textGap - textH - DOTS - 2 * minPad));
+        med = Math.max(phone ? 150 : 170, Math.min(med, room - textGap - textH - DOTS - topPad - minPad));
       }
       const group = med + textGap + textH + DOTS;
-      const topY = headBottom + Math.max(minPad, (room - group) / 2) + med / 2;
+      const topY = headBottom + topPad + Math.max(0, (room - group - topPad - minPad) / 2) + med / 2;
       // the half-circle rises from just below the bottom edge up to the medallions' path
       const R = H + (phone ? 24 : 60) - topY;
       // space the medallions so the neighbours sit comfortably on either side

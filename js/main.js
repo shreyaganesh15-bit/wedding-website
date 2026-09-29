@@ -196,6 +196,28 @@
     buildMorning();
     buildDusk();
     buildLineDrawings();
+    buildEnvelope();
+  }
+
+  /* ---------- Invitation: when the section arrives, the envelope opens and the cards rise out ---------- */
+  function buildEnvelope() {
+    const env = $('.envelope');
+    if (!env || reduceMotion) return;
+    const flap = $('.env-flap', env);
+    const cards = [$('.env-pdf', env), $('.invite-stamp', env)];
+    // start sealed: flap folded down over the pocket, cards tucked inside
+    gsap.set(flap, { scaleY: -1 });
+    flap.classList.add('is-closed');
+    gsap.set(cards, { '--rise': '64%' });
+    const tl = gsap.timeline({ paused: true })
+      .to(flap, {
+        scaleY: 1, duration: 0.8, ease: 'power2.inOut',
+        // past halfway the inside of the flap shows, and it drops behind the cards
+        onUpdate: () => flap.classList.toggle('is-closed', gsap.getProperty(flap, 'scaleY') < 0),
+      }, 0.2)
+      .to(cards[0], { '--rise': '0%', duration: 1, ease: 'power3.out' }, 0.85)
+      .to(cards[1], { '--rise': '0%', duration: 1, ease: 'power3.out' }, 1.05);
+    ScrollTrigger.create({ trigger: env, start: 'top 70%', once: true, onEnter: () => tl.play() });
   }
 
 
@@ -318,8 +340,22 @@
       const sc = lerp(sFit, sCov, e);
       ctx.fillStyle = '#FCFCFC'; // the film's own paper white, so the frame edges disappear
       ctx.fillRect(0, 0, W, H);
-      const im = nearest(f);
-      if (im) ctx.drawImage(im, lerp(xFit, xCov, e), lerp(yFit, yCov, e), IW * sc, IH * sc);
+      // blend the two loaded frames either side of the scroll position, so the film glides between
+      // frames instead of stepping (matters most on phones, which load every other frame)
+      const dx = lerp(xFit, xCov, e), dy = lerp(yFit, yCov, e), dw = IW * sc, dh = IH * sc;
+      let lo = Math.floor(f), hi = Math.ceil(f);
+      while (lo > 0 && !imgs[lo]) lo--;
+      while (hi < FRAMES - 1 && !imgs[hi]) hi++;
+      const a = imgs[lo], b = imgs[hi];
+      if (a && b && a !== b) {
+        ctx.drawImage(a, dx, dy, dw, dh);
+        ctx.globalAlpha = clamp((f - lo) / (hi - lo), 0, 1);
+        ctx.drawImage(b, dx, dy, dw, dh);
+        ctx.globalAlpha = 1;
+      } else {
+        const im = a || b || nearest(f);
+        if (im) ctx.drawImage(im, dx, dy, dw, dh);
+      }
     }
     new ResizeObserver(measure).observe(canvas);
     measure();
@@ -366,7 +402,7 @@
     /* --- scroll: play the film, swap the intro names for the full invitation --- */
     gsap.timeline({
       defaults: { ease: 'none' },
-      scrollTrigger: { trigger: hero, start: 'top top', end: '+=356%', pin: true, scrub: 0.6, anticipatePin: 1 },
+      scrollTrigger: { trigger: hero, start: 'top top', end: '+=356%', pin: true, scrub: 1, anticipatePin: 1 },
     })
       // the film ends at P_END; there is no hold after it, the invitation starts covering straight away
       .to(state, { p: P_END, duration: P_END, onUpdate: render }, 0)

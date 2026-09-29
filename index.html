@@ -11,9 +11,9 @@
   <meta property="og:image" content="assets/hero-frames/f123.webp" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Italianno&family=Katibeh&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Italianno&display=swap" rel="stylesheet" />
   <link rel="preload" as="image" href="assets/hero-frames/f000.webp" />
-  <link rel="stylesheet" href="css/style.css?v=143" />
+  <link rel="stylesheet" href="css/style.css?v=171" />
   <script>document.documentElement.classList.add('js');if(!matchMedia('(prefers-reduced-motion: reduce)').matches)document.documentElement.classList.add('story')</script>
 </head>
 <body>
@@ -180,7 +180,7 @@
      cancelled with a Vashi postmark and circled by a line of text. -->
 <section class="invite" id="invitation" data-nav-dark aria-labelledby="invite-title">
   <div class="invite-texture" aria-hidden="true"></div>
-  <div class="fairy-lights" aria-hidden="true"></div>
+  <div class="fairy-lights" aria-hidden="true"><i></i><i></i><i></i></div>
   <div class="invite-grid wrap">
     <div class="invite-text reveal">
       <h2 class="invite-title" id="invite-title">Our invitation</h2>
@@ -207,10 +207,18 @@
               <rect width="14" height="14" fill="#6C1716" /><rect width="7" height="7" fill="#8A2420" /><rect x="7" y="7" width="7" height="7" fill="#8A2420" />
             </pattern>
           </defs>
-          <path d="M8 156 L200 22 L392 156Z" fill="#EFA809" />
-          <path d="M30 156 L200 38 L370 156Z" fill="url(#env-liner)" />
           <rect x="8" y="152" width="384" height="244" rx="10" fill="#E3C68E" />
         </svg>
+        <!-- the flap: starts closed over the pocket and flips open when the section arrives (main.js) -->
+        <div class="env-flap" aria-hidden="true">
+          <svg class="flap-in" viewBox="0 0 400 400">
+            <path d="M8 156 L200 22 L392 156Z" fill="#EFA809" />
+            <path d="M30 156 L200 38 L370 156Z" fill="url(#env-liner)" />
+          </svg>
+          <svg class="flap-out" viewBox="0 0 400 400">
+            <path d="M8 156 L200 22 L392 156Z" fill="#F6E0AE" stroke="#DDBB7A" stroke-width="1.4" stroke-linejoin="round" />
+          </svg>
+        </div>
 
         <a class="env-card env-pdf" href="assets/invitation.pdf" target="_blank" rel="noopener" aria-label="View the printed invitation (PDF)">
           <img src="assets/invitation-card.jpg" alt="" width="563" height="900" loading="lazy" decoding="async" />
@@ -664,6 +672,6 @@
 <script src="https://cdn.jsdelivr.net/npm/gsap@3.15.0/dist/gsap.min.js" defer></script>
 <script src="https://cdn.jsdelivr.net/npm/gsap@3.15.0/dist/ScrollTrigger.min.js" defer></script>
 <script src="https://cdn.jsdelivr.net/npm/gsap@3.15.0/dist/DrawSVGPlugin.min.js" defer></script>
-<script src="js/main.js?v=66" defer></script>
+<script src="js/main.js?v=68" defer></script>
 </body>
 </html>

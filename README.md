@@ -27,7 +27,7 @@ Then open http://localhost:5173.
 
 ## Notes
 
-- **Look:** colours from the hero film (maroon, kumkum red, cream, marigold, banana-leaf green) with clean flat illustrations and no grain. Fonts (Google Fonts): Katibeh for all reading text, Italianno for the names.
+- **Look:** colours from the hero film (maroon, kumkum red, cream, marigold, banana-leaf green) with clean flat illustrations and no grain. Fonts: Agraham for the section titles (bundled in `assets/fonts/Agraham.otf`, from Hishand Studio; its licence is marked Personal Use), Helvetica for all reading text, Italianno (Google Fonts) for the names.
 - Motion respects "reduce motion" system settings.
 - `drafts/` holds the style explorations (including the Mix 2 mock-up in `direction-ad.html`). Nothing links to it, so it can be deleted.
 

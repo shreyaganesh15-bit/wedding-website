@@ -2654,6 +2654,22 @@ body:not(#_) .h2, body:not(#_) .invite-title, body:not(#_) .is-dial .dial-head .
 .story .moments-stage.is-dial:active { cursor: grabbing; }
 .story .moments-stage.is-dial img { -webkit-user-drag: none; }
 
+/* dots sit just under the ritual's words, with arrows either side to say "this swipes" */
+body:not(#_) .dial-dots { bottom: auto; gap: 14px; }
+.dial-pips { display: flex; align-items: center; gap: 10px; }
+.dial-arrow {
+  display: grid; place-items: center; width: 40px; height: 40px; padding: 0; border-radius: 50%;
+  border: 1px solid rgba(108, 23, 22, .28); background: rgba(255, 255, 255, .85); color: var(--cobalt);
+  cursor: pointer; transition: opacity .3s, background-color .2s, border-color .2s;
+}
+.dial-arrow svg { width: 18px; height: 18px; }
+.dial-arrow:hover { background: #fff; border-color: rgba(108, 23, 22, .55); }
+.dial-arrow:disabled { opacity: .3; cursor: default; }
+.dial-arrow:focus-visible { outline: 2px solid var(--cobalt); outline-offset: 3px; }
+.dial-dots.is-hinting .is-next:not(:disabled) svg { animation: dial-nudge 1.6s ease-in-out infinite; }
+@keyframes dial-nudge { 0%, 60%, 100% { transform: none; } 30% { transform: translateX(4px); } }
+@media (prefers-reduced-motion: reduce) { .dial-dots.is-hinting .is-next svg { animation: none; } }
+
 /* hero date and venue in bold: Prata has one weight, so let the browser embolden it here only */
 body:not(#_) .hero-copy .hero-when { font-weight: 700; font-synthesis: weight; }
 /* phones: the film fills the screen by height, so the garland sits at a fixed share of the picture's

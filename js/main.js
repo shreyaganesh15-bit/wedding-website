@@ -10,6 +10,8 @@
   if (location.hash) history.replaceState(null, '', location.pathname + location.search);
   window.scrollTo(0, 0);
   window.addEventListener('beforeunload', () => window.scrollTo(0, 0));
+  window.addEventListener('pagehide', () => window.scrollTo(0, 0));
+  window.addEventListener('load', () => window.scrollTo(0, 0));
 
   // "Story mode" = the scroll-driven version. Falls back to the static page if
   // motion is reduced or the animation libraries didn't load.
@@ -169,6 +171,8 @@
   if (story) {
     gsap.registerPlugin(ScrollTrigger, DrawSVGPlugin);
     ScrollTrigger.config({ ignoreMobileResize: true });
+    // ScrollTrigger remembers the scroll position across a reload too; forget it, a refresh starts at the hero
+    ScrollTrigger.clearScrollMemory('manual');
     // touch devices skip resize refreshes (to ignore the address bar), so re-measure ourselves
     // whenever the width really changes, otherwise pinned scenes keep a stale width
     let lastW = window.innerWidth, resizeT = 0;
@@ -414,6 +418,8 @@
         .to(loader, { autoAlpha: 0, duration: 0.8, ease: 'power1.inOut' }, 0.45)
         .add(() => {
           document.body.classList.remove('is-loading');
+          window.scrollTo(0, 0);
+          lenis.scrollTo(0, { immediate: true, force: true });
           lenis.start();
         }, 0.6)
         .from('.hero-intro > *', { y: 20, autoAlpha: 0, stagger: 0.08, duration: 0.8, ease: 'power3.out' }, 0.6)
@@ -527,6 +533,10 @@
       const h = $('h3', li);
       if (h && !$('.moment-no', h)) h.insertAdjacentHTML('afterbegin', `<span class="moment-no">${String(i + 1).padStart(2, '0')}</span>`);
     });
+    // the neighbouring circles sit off screen, so lazy loading waited for the swipe and showed an
+    // empty gold ring first; fetch and decode all six as the section comes near instead
+    const warm = () => $$('img', medsBox).forEach((img) => { img.loading = 'eager'; img.decode?.().catch(() => {}); });
+    ScrollTrigger.create({ trigger: stage, start: 'top 300%', once: true, onEnter: warm });
     items.forEach((li, i) => i > 0 && gsap.set(drawsIn(li), { drawSVG: '0%' }));
     const drawn = new Set([0]);
     gsap.from(drawsIn(items[0]), {
@@ -542,7 +552,8 @@
       const headBottom = head ? head.offsetTop + head.offsetHeight : H * 0.2;
       // centre the circle + words in the space between the title and the progress dots
       const textGap = phone ? 40 : 40;   // breathing room between the circle and its words
-      const room = H - 52 - headBottom;                       // 52 ≈ dots + breathing room at the bottom
+      const DOTS = 30 + 44;                                     // gap under the words + the arrows row
+      const room = H - 20 - headBottom;                         // 20 ≈ breathing room at the bottom
       const minPad = phone ? 34 : 28;   // space above the circle (below the intro) and above the dots
       // the words under the circle are only a little wider than the circle itself; the circle
       // shrinks when the words need the room (text height depends on its width, so settle twice)
@@ -551,9 +562,9 @@
       for (let k = 0; k < 2; k++) {
         stage.style.setProperty('--text-w', `${Math.round(Math.max(med * 1.35, phone ? 280 : 340))}px`);
         textH = Math.max(...items.map((li) => li.offsetHeight));
-        med = Math.max(phone ? 150 : 170, Math.min(med, room - textGap - textH - 2 * minPad));
+        med = Math.max(phone ? 150 : 170, Math.min(med, room - textGap - textH - DOTS - 2 * minPad));
       }
-      const group = med + textGap + textH;
+      const group = med + textGap + textH + DOTS;
       const topY = headBottom + Math.max(minPad, (room - group) / 2) + med / 2;
       // the half-circle rises from just below the bottom edge up to the medallions' path
       const R = H + (phone ? 24 : 60) - topY;
@@ -571,6 +582,7 @@
       sun.style.left = `${geo.cx}px`;
       sun.style.top = `${topY - med / 2 - (phone ? 18 : 26)}px`;
       stage.style.setProperty('--text-top', `${topY + med / 2 + textGap}px`);
+      dots.style.top = `${topY + med / 2 + textGap + textH + 30}px`;
       render();
     }
 
@@ -579,9 +591,13 @@
     // progress dots along the bottom of the scene
     const dots = document.createElement('div');
     dots.className = 'dial-dots';
-    dots.innerHTML = items.map(() => '<i></i>').join('');
+    const chev = (d) => `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="${d}" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+    dots.innerHTML = `<button class="dial-arrow is-prev" type="button" aria-label="Previous ritual">${chev('M15 5l-7 7 7 7')}</button>`
+      + `<span class="dial-pips">${items.map(() => '<i></i>').join('')}</span>`
+      + `<button class="dial-arrow is-next" type="button" aria-label="Next ritual">${chev('M9 5l7 7-7 7')}</button>`;
     stage.appendChild(dots);
-    const dotEls = [...dots.children];
+    const dotEls = [...$('.dial-pips', dots).children];
+    const prevBtn = $('.is-prev', dots), nextBtn = $('.is-next', dots);
 
     const state = { pos: 0 };
     let current = -1;
@@ -615,6 +631,7 @@
       if (idx !== current) {
         current = idx;
         dotEls.forEach((d, k) => d.classList.toggle('on', k === idx));
+        prevBtn.disabled = idx === 0; nextBtn.disabled = idx === n - 1;
         items[idx].classList.add('is-in');           // lets the seven footprints appear
         meds[idx].classList.add('is-in');
         if (!drawn.has(idx)) { drawn.add(idx); gsap.to(drawsIn(items[idx]), { drawSVG: '100%', duration: 0.8, stagger: 0.08, ease: 'power1.inOut' }); }
@@ -629,6 +646,7 @@
       i = Math.max(0, Math.min(n - 1, i));
       if (i === at) return;
       at = i;
+      hint();
       gsap.to(state, { pos: i, duration: 0.8, ease: 'power3.out', overwrite: true, onUpdate: render });
     }
     let sx = 0, sy = 0, swiping = false;
@@ -667,6 +685,11 @@
     });
     meds.forEach((m, i) => m.addEventListener('click', () => { if (i !== cardNow()) goTo(i); }));
     dotEls.forEach((d, i) => d.addEventListener('click', () => goTo(i)));
+    prevBtn.addEventListener('click', () => goTo(at - 1));
+    nextBtn.addEventListener('click', () => goTo(at + 1));
+    // the next arrow nudges sideways until the dial has been turned once, a hint that it swipes
+    const hint = () => dots.classList.remove('is-hinting');
+    dots.classList.add('is-hinting');
 
     new ResizeObserver(layout).observe(stage);
     layout();

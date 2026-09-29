@@ -482,6 +482,11 @@
     });
     const drawsIn = (li) => $$('.draw', li.__med || li);
     items.forEach((li, i) => { li.__med = meds[i]; });
+    // number each ritual's title (01 to 06), to match the order of the dots
+    items.forEach((li, i) => {
+      const h = $('h3', li);
+      if (h && !$('.moment-no', h)) h.insertAdjacentHTML('afterbegin', `<span class="moment-no">${String(i + 1).padStart(2, '0')}</span>`);
+    });
     items.forEach((li, i) => i > 0 && gsap.set(drawsIn(li), { drawSVG: '0%' }));
     const drawn = new Set([0]);
     gsap.from(drawsIn(items[0]), {
@@ -496,12 +501,12 @@
       const phone = W < 700;
       const headBottom = head ? head.offsetTop + head.offsetHeight : H * 0.2;
       // centre the circle + words in the space between the title and the progress dots
-      const textGap = phone ? 26 : 30;   // the words sit just under the circle
+      const textGap = phone ? 40 : 40;   // breathing room between the circle and its words
       const room = H - 52 - headBottom;                       // 52 ≈ dots + breathing room at the bottom
-      const minPad = phone ? 20 : 20;
+      const minPad = phone ? 34 : 28;   // space above the circle (below the intro) and above the dots
       // the words under the circle are only a little wider than the circle itself; the circle
       // shrinks when the words need the room (text height depends on its width, so settle twice)
-      let med = phone ? Math.min(W * 0.84, 360, H * 0.46) : Math.min(440, H * 0.5);
+      let med = phone ? Math.min(W * 0.72, 300, H * 0.38) : Math.min(400, H * 0.44);
       let textH = 0;
       for (let k = 0; k < 2; k++) {
         stage.style.setProperty('--text-w', `${Math.round(Math.max(med * 1.35, phone ? 280 : 340))}px`);

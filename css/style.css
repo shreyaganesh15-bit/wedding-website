@@ -2451,7 +2451,7 @@ html, body { overflow-x: hidden; overscroll-behavior-x: none; }
 /* Helvetica for all reading text. Its letters are much bigger than Katibeh's at the same size, so
    font-size-adjust sets its x-height to a fixed share of the size: the text keeps roughly the size
    it had, a touch larger for legibility. Titles (Agraham) and names (Italianno) keep their own sizes. */
-body { font-size-adjust: 0.45; }
+body { font-size-adjust: 0.42; }
 .h2, .invite-title, .invite-btn, .monogram, .names, .amp, .n1, .n2, .intro-names, .footer-names, .closing-names { font-size-adjust: none; }
 
 /* short phones (iPhone SE and similar): a little less text in the morning so the card clears the dots */

@@ -307,6 +307,7 @@
 
     // frames play between these scroll points (0..1 of the pinned hero)
     const P_START = 0.04, P_END = 0.8;
+    const P_STOP = 0.62;   // the film stops here: the frame on screen when the hero words begin to appear
     const P_FULL = P_START + (P_END - P_START) * (FULL_BLEED_FRAME / (FRAMES - 1));
 
     const MANDAP_CX = 665 / 1280;   // measured on the last frame: posts at ~329 and ~1001 of 1280
@@ -402,18 +403,17 @@
     /* --- scroll: play the film, swap the intro names for the full invitation --- */
     gsap.timeline({
       defaults: { ease: 'none' },
-      scrollTrigger: { trigger: hero, start: 'top top', end: '+=356%', pin: true, scrub: 1, anticipatePin: 1 },
+      scrollTrigger: { trigger: hero, start: 'top top', end: '+=343%', pin: true, scrub: 1, anticipatePin: 1 },
     })
-      // the film ends at P_END; there is no hold after it, the invitation starts covering straight away
-      .to(state, { p: P_END, duration: P_END, onUpdate: render }, 0)
+      // the film freezes on the frame where the words start to appear (P_STOP), so the picture holds
+      // still while they rise; the rest of the film is never shown
+      .to(state, { p: P_STOP, duration: P_STOP, onUpdate: render }, 0)
       .to('.door-cue', { autoAlpha: 0, duration: 0.05 }, 0)
       .to(intro, { autoAlpha: 0, y: -30, duration: 0.1 }, 0.03)
-      // the words rise while the camera glides onto the mandapam (not after it), so the last
-      // stretch of the film never looks like an empty, sliding picture
-      .fromTo('.hero-copy', { autoAlpha: 0, y: 30 }, { autoAlpha: 1, y: 0, duration: 0.14, ease: 'power2.out' }, 0.62)
-      // film done at P_END (1 unit = 320% of scroll); the last screen of scroll is the invitation covering it
-      .to(['.hero-scene', '.hero-copy'], { scale: 0.92, autoAlpha: 0.35, duration: 100 / 320 }, P_END)
-      .to('.hero-scene', { borderRadius: 28, duration: 100 / 320 }, P_END);
+      .fromTo('.hero-copy', { autoAlpha: 0, y: 30 }, { autoAlpha: 1, y: 0, duration: 0.14, ease: 'power2.out' }, P_STOP)
+      // once the words are in (1 unit = 320% of scroll), the last screen of scroll is the invitation covering it
+      .to(['.hero-scene', '.hero-copy'], { scale: 0.92, autoAlpha: 0.35, duration: 100 / 320 }, P_STOP + 0.14)
+      .to('.hero-scene', { borderRadius: 28, duration: 100 / 320 }, P_STOP + 0.14);
 
   }
 

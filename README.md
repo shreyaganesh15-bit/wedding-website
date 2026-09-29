@@ -27,7 +27,7 @@ Then open http://localhost:5173.
 
 ## Notes
 
-- **Look:** colours from the hero film (maroon, kumkum red, cream, marigold, banana-leaf green) with clean flat illustrations and no grain. Fonts: Agraham for the section titles (bundled in `assets/fonts/Agraham.otf`, from Hishand Studio; its licence is marked Personal Use), Helvetica for all reading text, Italianno (Google Fonts) for the names.
+- **Look:** colours from the hero film (maroon, kumkum red, cream, marigold, banana-leaf green) with clean flat illustrations and no grain. Fonts: Agraham for the section titles (bundled in `assets/fonts/Agraham.otf`, from Hishand Studio; its licence is marked Personal Use), Prata (Google Fonts) for all reading text, Italianno (Google Fonts) for the names.
 - Motion respects "reduce motion" system settings.
 - `drafts/` holds the style explorations (including the Mix 2 mock-up in `direction-ad.html`). Nothing links to it, so it can be deleted.
 
@@ -76,7 +76,7 @@ Your night terrace painting (`reception bg.png`, saved as `assets/reception-bg.j
 
 ## Find us and footer
 
-Find us shows your illustrated map (`map.png`, saved as `assets/map.jpg`) in a clean rounded card, beside the address and two buttons: Google Maps and Apple Maps. The map picture is itself a link with an "Open in maps" label: on iPhone, iPad and Mac it opens Apple Maps, on Android it offers the installed map apps (Google Maps, Waze and so on), and elsewhere it opens Google Maps. No live map is embedded any more. The old hand-drawn map, the stray sprig and dot are gone.
+Find us shows your illustrated map (`map.png`, saved as `assets/map.jpg`) in a clean rounded card, beside the address and two buttons: Google Maps and Apple Maps. The map picture is itself a link (no label on it): on iPhone, iPad and Mac it opens Apple Maps, on Android it offers the installed map apps (Google Maps, Waze and so on), and elsewhere it opens Google Maps. No live map is embedded any more. The old hand-drawn map, the stray sprig and dot are gone.
 
 The footer is maroon (#6C1716 at the top, like the invitation, with a warm glow behind the names and a gentle deepening towards the bottom) with the closing line, a live countdown to the Muhurtham (days, hours, minutes, seconds to 16 November 2026, 9:00 AM India time; it says "Today’s the day" on the day and "Happily married" after), section links and back to top. The divider line above the links is gone.
 

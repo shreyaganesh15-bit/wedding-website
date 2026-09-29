@@ -267,8 +267,7 @@
       im.onload = () => (im.decode ? im.decode() : Promise.resolve()).catch(() => {}).then(() => {
         imgs[i] = im;
         if (firstBatch.has(i) && ++batchLoaded === firstBatch.size) batchDone();
-        if (firstBatch.has(i)) bump(15 + Math.round((batchLoaded / firstBatch.size) * 80));
-        render();
+        if (i === 0 || !document.body.classList.contains('is-loading')) render();
         res();
       });
       im.onerror = () => { if (firstBatch.has(i) && ++batchLoaded === firstBatch.size) batchDone(); res(); };
@@ -365,45 +364,44 @@
     new ResizeObserver(measure).observe(canvas);
     measure();
 
-    /* --- loader: a kolam draws itself as the first frames arrive; the Ganpati appears at its centre,
-           then the kolam opens out and fades, revealing the door --- */
+    /* --- loader: the kolam draws itself on a fixed, unhurried clock (it never waits mid-stroke for
+           the network); the Ganpati appears at its centre; if the film is still loading, the finished
+           kolam breathes gently; then it opens out and fades onto the door in one continuous move --- */
     const kLines = $$('.kl', loader);
     const kDots = $$('.kl-dots circle', loader);
     const kolamSvg = $('.loader-kolam', loader);
     const ganpati = $('.loader-ganpati', loader);
     gsap.set(kLines, { drawSVG: '0%' });
     gsap.set(ganpati, { autoAlpha: 0, scale: 0.85, transformOrigin: '50% 50%' });
-    // the dots are laid first, like the pulli before a kolam is drawn
-    gsap.from(kDots, { scale: 0, autoAlpha: 0, transformOrigin: '50% 50%', duration: 0.5, ease: 'back.out(2)', stagger: { each: 0.012, from: 'random' } });
-    const shown = { v: 0 };
-    let target = 5;
-    function bump(to) {
-      target = Math.max(target, to);
-      gsap.to(shown, { v: target, duration: 0.8, ease: 'power1.out', overwrite: true,
-        onUpdate: () => gsap.set(kLines, { drawSVG: `${shown.v * 0.9}%` }) });
-    }
-    bump(10);
+    let breathe = null;
+    const drawn = new Promise((done) => {
+      gsap.timeline({ onComplete: done })
+        // the dots are laid first, like the pulli before a kolam is drawn
+        .from(kDots, { scale: 0, autoAlpha: 0, transformOrigin: '50% 50%', duration: 0.45, ease: 'back.out(2)', stagger: { each: 0.008, from: 'random' } })
+        .to(kLines, { drawSVG: '100%', duration: 1.7, ease: 'power1.inOut', stagger: 0.03 }, 0.25)
+        .to(ganpati, { autoAlpha: 1, scale: 1, duration: 0.6, ease: 'power2.out' }, '-=0.35');
+    }).then(() => {
+      breathe = gsap.to(kolamSvg, { scale: 1.025, duration: 1.3, ease: 'sine.inOut', yoyo: true, repeat: -1, transformOrigin: '50% 50%' });
+    });
     const fonts = document.fonts ? document.fonts.ready : Promise.resolve();
-    const ready = Promise.race([
-      Promise.all([batchReady, fonts, new Promise((r) => setTimeout(r, 1600))]),
+    const loaded = Promise.race([
+      Promise.all([batchReady, fonts]),
       new Promise((r) => setTimeout(r, 7000)),
     ]);
 
-    ready.then(() => {
-      gsap.killTweensOf(shown);
+    Promise.all([loaded, drawn]).then(() => {
       measure();
-      gsap.timeline({ delay: 0.2 })
-        .to(kLines, { drawSVG: '100%', duration: 0.7, ease: 'power2.out' })
-        .to(ganpati, { autoAlpha: 1, scale: 1, duration: 0.7, ease: 'power2.out' }, '-=0.2')
-        .to(kolamSvg, { scale: 1.35, autoAlpha: 0, duration: 1.1, ease: 'power2.in', transformOrigin: '50% 50%' }, '+=0.45')
-        .to(loader, { autoAlpha: 0, duration: 0.9, ease: 'power1.inOut' }, '-=0.6')
+      if (breathe) breathe.kill();
+      gsap.timeline()
+        .to(kolamSvg, { scale: 1.3, autoAlpha: 0, duration: 1, ease: 'power2.inOut', transformOrigin: '50% 50%' }, 0.15)
+        .to(loader, { autoAlpha: 0, duration: 0.8, ease: 'power1.inOut' }, 0.45)
         .add(() => {
           document.body.classList.remove('is-loading');
           lenis.start();
-        }, '-=0.5')
-        .from('.hero-intro > *', { y: 24, autoAlpha: 0, stagger: 0.1, duration: 0.9, ease: 'power3.out' }, '-=0.5')
-        .from(canvas, { autoAlpha: 0, scale: 0.97, duration: 1.1, ease: 'power3.out' }, '<0.1')
-        .from('.door-cue', { autoAlpha: 0, y: 10, duration: 0.6 }, '-=0.4')
+        }, 0.6)
+        .from('.hero-intro > *', { y: 20, autoAlpha: 0, stagger: 0.08, duration: 0.8, ease: 'power3.out' }, 0.6)
+        .from(canvas, { autoAlpha: 0, scale: 0.98, duration: 1, ease: 'power3.out' }, 0.65)
+        .from('.door-cue', { autoAlpha: 0, y: 10, duration: 0.6 }, 1.2)
         .add(() => loader.remove());
     });
 

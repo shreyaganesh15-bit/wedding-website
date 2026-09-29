@@ -1,7 +1,7 @@
 /* ==========================================================================
    Shreya & Ashwin: an illustrated storybook of one wedding day
    Colours from the hero film: maroon, kumkum red, cream, marigold and banana-leaf
-   green on a warm cream page. Helvetica for reading, Agraham for titles, Italianno for the names.
+   green on a warm cream page. Prata for reading, Agraham for titles, Italianno for the names.
    ========================================================================== */
 
 :root {
@@ -31,8 +31,8 @@
   --night-2: #74222A;
   --moon: #FFF6E0;
 
-  --display: "Helvetica Neue", Helvetica, Arial, sans-serif;
-  --serif: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  --display: "Prata", Georgia, serif;
+  --serif: "Prata", Georgia, serif;
   --script: "Italianno", "Snell Roundhand", cursive;
 
   --gutter: clamp(16px, 5vw, 48px);
@@ -2453,7 +2453,7 @@ html, body { overflow-x: hidden; overscroll-behavior-x: none; }
 /* Helvetica for all reading text. Its letters are much bigger than Katibeh's at the same size, so
    font-size-adjust sets its x-height to a fixed share of the size: the text keeps roughly the size
    it had, a touch larger for legibility. Titles (Agraham) and names (Italianno) keep their own sizes. */
-body { font-size-adjust: 0.42; }
+body { font-size-adjust: 0.39; }
 .h2, .invite-title, .invite-btn, .monogram, .names, .amp, .n1, .n2, .intro-names, .footer-names, .closing-names { font-size-adjust: none; }
 
 /* short phones (iPhone SE and similar): a little less text in the morning so the card clears the dots */
@@ -2471,12 +2471,12 @@ body { font-size-adjust: 0.42; }
   .is-dial .dial-head .lede { max-width: 46rem; margin-inline: auto; }
 }
 
-/* the scroll cue: in the title font, and lifted clear of the phone's bottom toolbar (the hero is
+/* the scroll cue: in the body font, and lifted clear of the phone's bottom toolbar (the hero is
    100lvh, so the gap between lvh and svh is the part a toolbar can cover) */
 .story .door-cue {
   bottom: calc(max(12px, env(safe-area-inset-bottom)) + (100lvh - 100svh) + 34px);
-  font-family: "Agraham", var(--display); font-weight: 400; font-size: 1.15rem; letter-spacing: .02em;
-  font-size-adjust: none; gap: 10px;
+  font-family: var(--serif); font-weight: 400; font-size: 1rem; letter-spacing: .02em;
+  gap: 10px;
 }
 
 /* a faint kolam rosette in the disc behind the circles. It is a full circle centred on the disc's
@@ -2572,7 +2572,8 @@ body:not(#_) .med-hero .moment-art { inset: 2.4%; }
 /* the entry: a kolam drawing itself on cream (no lamp, no counter); the scallop edge is gone
    because the loader now fades away instead of sliding up */
 .story .loader::after { content: none; }
-.loader-kolam { width: min(62vw, 300px, 46vh); height: auto; overflow: visible; }
+.loader-kolam { width: min(62vw, 300px, 46vh); height: auto; overflow: visible; will-change: transform, opacity; }
+.story .loader { will-change: opacity; }
 
 /* ==========================================================================
    Desktop type audit (701px and up). Sizes below are what the text LOOKS like; Helvetica is

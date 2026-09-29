@@ -621,64 +621,15 @@
       }
     }
 
-    // Scroll plan (in "moment" units): hold on the first moment so it can be read, turn through
-    // the rest, then a short hold on the last before the scene lets go. Nothing moves before the pin.
-    const HOLD_START = 0.6, HOLD_END = 0.3;
-    const total = HOLD_START + (n - 1) + HOLD_END;
-    const perUnit = () => window.innerHeight * 0.55;
-    const turn = gsap.timeline({ defaults: { ease: 'none' } })
-      .to({}, { duration: HOLD_START })
-      .to(state, { pos: n - 1, duration: n - 1, onUpdate: render })
-      .to({}, { duration: HOLD_END });
-    const snapPoints = items.map((_, i) => (HOLD_START + i) / total);
-    const pinST = ScrollTrigger.create({
-      trigger: stage, start: 'top top', end: () => `+=${total * perUnit()}`,
-      pin: true, scrub: 0.5, animation: turn,
-      // the top bar steps out of the way while the scene is locked, and comes back after
-      onToggle: (self) => { $('.menu').classList.toggle('is-tucked', self.isActive); if (self.isActive) closeMenu(); },
-    });
-
-    /* Snap to the cards. ScrollTrigger's own snap fights the smooth scroller, so snapping is done
-       through Lenis: when scrolling pauses inside the scene, glide to a card in the direction you
-       were going (a small nudge is enough), without trapping you at either end. */
-    let settled = 0, snapping = false, dir = 1, snapTimer = 0;
-    const pointY = (i) => pinST.start + snapPoints[i] * (pinST.end - pinST.start);
-    function snapToCard() {
-      if (snapping || !pinST.isActive) return;
-      const units = pinST.progress * total - HOLD_START;        // 0 = first card, n-1 = last card
-      if (units > n - 1 + HOLD_END * 0.5 && dir > 0) return;     // leaving past the last card
-      if (units < -HOLD_START * 0.5 && dir < 0) return;          // leaving back above the first
-      let i = Math.round(units);
-      if (dir > 0 && units - settled > 0.08) i = Math.ceil(units - 0.02);
-      if (dir < 0 && settled - units > 0.08) i = Math.floor(units + 0.02);
-      i = Math.max(0, Math.min(n - 1, i));
-      const y = pointY(i);
-      if (Math.abs(y - window.scrollY) < 2) { settled = i; return; }
-      snapping = true;
-      lenis.scrollTo(y, {
-        duration: 0.75, easing: (t) => 1 - Math.pow(1 - t, 3),
-        onComplete: () => { snapping = false; settled = i; },
-      });
-      setTimeout(() => { snapping = false; }, 1200);             // safety net if the glide is interrupted
-    }
-    lenis.on('scroll', (e) => {
-      if (e.direction) dir = e.direction;
-      if (snapping) return;
-      clearTimeout(snapTimer);
-      snapTimer = setTimeout(snapToCard, 140);
-    });
-    /* Swipe as well as scroll: the dial looks like a carousel, so a sideways swipe (or a trackpad's
-       sideways scroll), a tap on a neighbouring circle, or a tap on a dot also turns it. Each one
-       moves the page to that card's scroll point, so scrolling and swiping always agree. */
-    const cardNow = () => Math.max(0, Math.min(n - 1, Math.round(pinST.progress * total - HOLD_START)));
+    /* A carousel, not a scroll scene: the page scrolls straight past, and the dial turns only by a
+       sideways swipe, a trackpad's sideways scroll, a tap on a neighbouring circle or a tap on a dot */
+    let at = 0;
+    const cardNow = () => at;
     function goTo(i) {
       i = Math.max(0, Math.min(n - 1, i));
-      snapping = true;
-      lenis.scrollTo(pointY(i), {
-        duration: 0.8, easing: (t) => 1 - Math.pow(1 - t, 3),
-        onComplete: () => { snapping = false; settled = i; },
-      });
-      setTimeout(() => { snapping = false; }, 1300);
+      if (i === at) return;
+      at = i;
+      gsap.to(state, { pos: i, duration: 0.8, ease: 'power3.out', overwrite: true, onUpdate: render });
     }
     let sx = 0, sy = 0, swiping = false;
     stage.addEventListener('touchstart', (e) => {
@@ -689,16 +640,31 @@
       if (!swiping) return;
       swiping = false;
       const t = e.changedTouches[0], dx = t.clientX - sx, dy = t.clientY - sy;
-      if (pinST.isActive && Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy) * 1.3) goTo(cardNow() + (dx < 0 ? 1 : -1));
+      if (Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy) * 1.3) goTo(at + (dx < 0 ? 1 : -1));
     }, { passive: true });
+    // desktop: drag with the mouse, like a phone swipe
+    let mx = null;
+    stage.addEventListener('pointerdown', (e) => { if (e.pointerType === 'mouse') mx = e.clientX; });
+    window.addEventListener('pointerup', (e) => {
+      if (mx === null) return;
+      const dx = e.clientX - mx; mx = null;
+      if (Math.abs(dx) > 50) goTo(at + (dx < 0 ? 1 : -1));
+    });
     let wheelLock = 0;
     stage.addEventListener('wheel', (e) => {
-      if (!pinST.isActive || Math.abs(e.deltaX) < 30 || Math.abs(e.deltaX) < Math.abs(e.deltaY) * 1.5) return;
+      if (Math.abs(e.deltaX) < 30 || Math.abs(e.deltaX) < Math.abs(e.deltaY) * 1.5) return;
       const now = performance.now();
       if (now < wheelLock) return;
       wheelLock = now + 800;
-      goTo(cardNow() + (e.deltaX > 0 ? 1 : -1));
+      goTo(at + (e.deltaX > 0 ? 1 : -1));
     }, { passive: true });
+    // arrow keys while the dial is on screen
+    window.addEventListener('keydown', (e) => {
+      if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+      const r = stage.getBoundingClientRect();
+      if (r.bottom < innerHeight * 0.3 || r.top > innerHeight * 0.7) return;
+      goTo(at + (e.key === 'ArrowRight' ? 1 : -1));
+    });
     meds.forEach((m, i) => m.addEventListener('click', () => { if (i !== cardNow()) goTo(i); }));
     dotEls.forEach((d, i) => d.addEventListener('click', () => goTo(i)));
 

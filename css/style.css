@@ -2638,6 +2638,17 @@ body:not(#_) .find-actions .invite-btn, body:not(#_) .invite-actions .invite-btn
 /* keep "big day." together so the footer heading breaks as "See you on our / big day." */
 .footer-line .nowrap { white-space: nowrap; }
 
+/* two-line titles in Agraham: more room between the lines (its tall capitals and long tails were
+   touching the line below) */
+body:not(#_) .h2, body:not(#_) .invite-title, body:not(#_) .is-dial .dial-head .h2, body:not(#_) .site-footer .footer-line { line-height: 1.62; }
+
+/* the circles and dots can be tapped to move the timeline (the dial layer itself stays click-through) */
+.is-dial .med { pointer-events: auto; }
+.is-dial .med:not(.is-active) { cursor: pointer; }
+.dial-dots { pointer-events: auto; }
+.dial-dots i { cursor: pointer; position: relative; }
+.dial-dots i::after { content: ""; position: absolute; inset: -12px -6px; }   /* a bigger target for fingers */
+
 /* ==========================================================================
    Desktop type audit (701px and up). Sizes below are what the text LOOKS like; Helvetica is
    scaled by font-size-adjust, so the CSS values are larger (css = look / 0.812).

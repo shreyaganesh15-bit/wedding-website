@@ -636,6 +636,41 @@
       clearTimeout(snapTimer);
       snapTimer = setTimeout(snapToCard, 140);
     });
+    /* Swipe as well as scroll: the dial looks like a carousel, so a sideways swipe (or a trackpad's
+       sideways scroll), a tap on a neighbouring circle, or a tap on a dot also turns it. Each one
+       moves the page to that card's scroll point, so scrolling and swiping always agree. */
+    const cardNow = () => Math.max(0, Math.min(n - 1, Math.round(pinST.progress * total - HOLD_START)));
+    function goTo(i) {
+      i = Math.max(0, Math.min(n - 1, i));
+      snapping = true;
+      lenis.scrollTo(pointY(i), {
+        duration: 0.8, easing: (t) => 1 - Math.pow(1 - t, 3),
+        onComplete: () => { snapping = false; settled = i; },
+      });
+      setTimeout(() => { snapping = false; }, 1300);
+    }
+    let sx = 0, sy = 0, swiping = false;
+    stage.addEventListener('touchstart', (e) => {
+      if (e.touches.length !== 1) return;
+      sx = e.touches[0].clientX; sy = e.touches[0].clientY; swiping = true;
+    }, { passive: true });
+    stage.addEventListener('touchend', (e) => {
+      if (!swiping) return;
+      swiping = false;
+      const t = e.changedTouches[0], dx = t.clientX - sx, dy = t.clientY - sy;
+      if (pinST.isActive && Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy) * 1.3) goTo(cardNow() + (dx < 0 ? 1 : -1));
+    }, { passive: true });
+    let wheelLock = 0;
+    stage.addEventListener('wheel', (e) => {
+      if (!pinST.isActive || Math.abs(e.deltaX) < 30 || Math.abs(e.deltaX) < Math.abs(e.deltaY) * 1.5) return;
+      const now = performance.now();
+      if (now < wheelLock) return;
+      wheelLock = now + 800;
+      goTo(cardNow() + (e.deltaX > 0 ? 1 : -1));
+    }, { passive: true });
+    meds.forEach((m, i) => m.addEventListener('click', () => { if (i !== cardNow()) goTo(i); }));
+    dotEls.forEach((d, i) => d.addEventListener('click', () => goTo(i)));
+
     new ResizeObserver(layout).observe(stage);
     layout();
   }

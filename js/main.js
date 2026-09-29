@@ -551,10 +551,11 @@
       const phone = W < 700;
       const headBottom = head ? head.offsetTop + head.offsetHeight : H * 0.2;
       // centre the circle + words in the space between the title and the progress dots
-      const textGap = phone ? 40 : 40;   // breathing room between the circle and its words
-      const DOTS = 30 + 44;                                     // gap under the words + the arrows row
-      const room = H - 20 - headBottom;                         // 20 ≈ breathing room at the bottom
-      const minPad = phone ? 34 : 28;   // space above the circle (below the intro) and above the dots
+      const textGap = phone ? 26 : 40;   // breathing room between the circle and its words
+      const dotsGap = phone ? 16 : 30;                          // gap under the words
+      const DOTS = dotsGap + (phone ? 38 : 44);                // + the arrows row
+      const room = H - (phone ? 10 : 20) - headBottom;          // breathing room at the bottom
+      const minPad = phone ? 18 : 28;   // space above the circle (below the intro) and above the dots
       // the words under the circle are only a little wider than the circle itself; the circle
       // shrinks when the words need the room (text height depends on its width, so settle twice)
       let med = phone ? Math.min(W * 0.72, 300, H * 0.38) : Math.min(400, H * 0.44);
@@ -582,7 +583,7 @@
       sun.style.left = `${geo.cx}px`;
       sun.style.top = `${topY - med / 2 - (phone ? 18 : 26)}px`;
       stage.style.setProperty('--text-top', `${topY + med / 2 + textGap}px`);
-      dots.style.top = `${topY + med / 2 + textGap + textH + 30}px`;
+      dots.style.top = `${topY + med / 2 + textGap + textH + dotsGap}px`;
       render();
     }
 

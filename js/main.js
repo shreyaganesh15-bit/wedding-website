@@ -422,7 +422,7 @@
     ScrollTrigger.addEventListener('refreshInit', pullUp);
 
     /* --- scroll: play the film, swap the intro names for the full invitation --- */
-    gsap.timeline({
+    const heroTl = gsap.timeline({
       defaults: { ease: 'none' },
       scrollTrigger: { trigger: hero, start: 'top top', end: '+=343%', pin: true, scrub: 1, anticipatePin: 1 },
     })
@@ -435,6 +435,29 @@
       // once the words are in (1 unit = 320% of scroll), the last screen of scroll is the invitation covering it
       .to(['.hero-scene', '.hero-copy'], { scale: 0.92, autoAlpha: 0.35, duration: 100 / 320 }, P_STOP + 0.14)
       .to('.hero-scene', { borderRadius: 28, duration: 100 / 320 }, P_STOP + 0.14);
+
+    /* One swipe through the door: the first nudge down carries the page all the way to the frame
+       where the invitation words are fully in (and a nudge back up returns to the closed door), so
+       nobody has to keep scrolling through the film wondering if it is stuck. */
+    const heroST = heroTl.scrollTrigger;
+    const WORDS_IN = (P_STOP + 0.14) / heroTl.duration();              // timeline progress with the words in
+    const wordsY = () => heroST.start + WORDS_IN * (heroST.end - heroST.start);
+    let gliding = false;
+    const glide = (y) => {
+      gliding = true;
+      lenis.scrollTo(y, {
+        duration: 1.9, easing: (t) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2), lock: true,
+        onComplete: () => { gliding = false; },
+      });
+      setTimeout(() => { gliding = false; }, 2600);
+    };
+    lenis.on('scroll', (e) => {
+      if (gliding || document.body.classList.contains('is-loading')) return;
+      const y = window.scrollY, top = heroST.start, words = wordsY();
+      if (y <= top + 2 || y >= words - 2) return;                   // only between the door and the words
+      if (e.direction > 0) glide(words);
+      else if (e.direction < 0) glide(top);
+    });
 
   }
 

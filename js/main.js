@@ -311,6 +311,7 @@
       ctx.imageSmoothingQuality = 'high';
       const hr = hero.getBoundingClientRect();
       introBottom = intro.getBoundingClientRect().bottom - hr.top;
+      hero.style.setProperty('--art-h', H + 'px');
       render();
     }
 

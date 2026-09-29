@@ -2649,6 +2649,21 @@ body:not(#_) .h2, body:not(#_) .invite-title, body:not(#_) .is-dial .dial-head .
 .dial-dots i { cursor: pointer; position: relative; }
 .dial-dots i::after { content: ""; position: absolute; inset: -12px -6px; }   /* a bigger target for fingers */
 
+/* hero date and venue in bold: Prata has one weight, so let the browser embolden it here only */
+body:not(#_) .hero-copy .hero-when { font-weight: 700; font-synthesis: weight; }
+/* phones: the film fills the screen by height, so the garland sits at a fixed share of the picture's
+   height (which can be taller than svh on iPhone Safari); hang the words from the picture, not svh */
+@media (max-width: 760px) {
+  body:not(#_) .hero-copy { top: calc(var(--art-h, 100svh) * .29); }
+}
+/* short phones (iPhone SE and similar): tighten so the words fit between the garland and the red band */
+@media (max-width: 760px) and (max-height: 740px) {
+  body:not(#_) .hero-copy { top: calc(var(--art-h, 100svh) * .265); }
+  body:not(#_) .hero-ganpati { height: 32px; margin-bottom: 4px; }
+  body:not(#_) .hero-copy .hero-invite-top { font-size: 1rem; line-height: 1.5; margin: 6px auto 2px; max-width: 34ch; text-wrap: balance; }
+  body:not(#_) .hero-copy .names { font-size: min(13vw, 3.1rem); margin-bottom: 4px; }
+}
+
 /* ==========================================================================
    Desktop type audit (701px and up). Sizes below are what the text LOOKS like; Helvetica is
    scaled by font-size-adjust, so the CSS values are larger (css = look / 0.812).

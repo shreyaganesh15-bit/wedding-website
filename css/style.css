@@ -2569,6 +2569,11 @@ body:not(#_) .med-hero .moment-art { inset: 2.4%; }
 @keyframes rim-shine { to { --shine: 360deg; } }
 @media (prefers-reduced-motion: reduce) { body:not(#_) .med-disc { animation: none; } }
 
+/* the entry: a kolam drawing itself on cream (no lamp, no counter); the scallop edge is gone
+   because the loader now fades away instead of sliding up */
+.story .loader::after { content: none; }
+.loader-kolam { width: min(62vw, 300px, 46vh); height: auto; overflow: visible; }
+
 /* ==========================================================================
    Desktop type audit (701px and up). Sizes below are what the text LOOKS like; Helvetica is
    scaled by font-size-adjust, so the CSS values are larger (css = look / 0.812).

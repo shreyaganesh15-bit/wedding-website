@@ -229,7 +229,6 @@
      ====================================================================== */
   function buildLoaderAndHero() {
     const loader = $('#loader');
-    const num = $('#loader-num');
     const canvas = $('#hero-canvas');
     const ctx = canvas.getContext('2d');
     const intro = $('.hero-intro');
@@ -242,7 +241,9 @@
     const FULL_BLEED_FRAME = 36;
     const src = (i) => `assets/hero-frames/f${String(i).padStart(3, '0')}.webp`;
     const phone = Math.min(window.innerWidth, window.innerHeight) < 700;
-    const step = phone ? 2 : 1; // phones load every other frame to save data
+    // the film stops at P_STOP (about frame 94), so only frames up to there are ever shown; loading
+    // just those lets every device load every frame, which keeps the scrub smooth without blending
+    const LAST_FRAME = 94;
 
     document.body.classList.add('is-loading');
     lenis.stop();
@@ -252,9 +253,9 @@
     const order = [];
     const seen = new Set();
     const add = (i) => { if (!seen.has(i)) { seen.add(i); order.push(i); } };
-    add(0); add(FRAMES - 1);
-    for (const gap of [16, 8, 4, 2, 1]) for (let i = 0; i < FRAMES; i += gap) if (i % step === 0) add(i);
-    const firstBatch = new Set(order.filter((i) => i % 16 === 0 || i === FRAMES - 1));
+    add(0); add(LAST_FRAME);
+    for (const gap of [16, 8, 4, 2, 1]) for (let i = 0; i <= LAST_FRAME; i += gap) add(i);
+    const firstBatch = new Set(order.filter((i) => i % 16 === 0 || i === LAST_FRAME));
     let batchLoaded = 0;
     let batchDone;
     const batchReady = new Promise((r) => (batchDone = r));
@@ -262,13 +263,14 @@
     const load = (i) => new Promise((res) => {
       const im = new Image();
       im.decoding = 'async';
-      im.onload = () => {
+      // unpack each picture before it is used, so drawing it mid-scroll never stalls a frame
+      im.onload = () => (im.decode ? im.decode() : Promise.resolve()).catch(() => {}).then(() => {
         imgs[i] = im;
         if (firstBatch.has(i) && ++batchLoaded === firstBatch.size) batchDone();
         if (firstBatch.has(i)) bump(15 + Math.round((batchLoaded / firstBatch.size) * 80));
         render();
         res();
-      };
+      });
       im.onerror = () => { if (firstBatch.has(i) && ++batchLoaded === firstBatch.size) batchDone(); res(); };
       im.src = src(i);
     });
@@ -348,47 +350,59 @@
       while (lo > 0 && !imgs[lo]) lo--;
       while (hi < FRAMES - 1 && !imgs[hi]) hi++;
       const a = imgs[lo], b = imgs[hi];
-      if (a && b && a !== b) {
+      // blend only true neighbours; mixing frames further apart (while the ones between are still
+      // loading) shows as a ghosted, blurry picture, so then the nearer one is drawn on its own
+      if (a && b && a !== b && hi - lo === 1) {
         ctx.drawImage(a, dx, dy, dw, dh);
         ctx.globalAlpha = clamp((f - lo) / (hi - lo), 0, 1);
         ctx.drawImage(b, dx, dy, dw, dh);
         ctx.globalAlpha = 1;
       } else {
-        const im = a || b || nearest(f);
+        const im = (a && b ? (f - lo < hi - f ? a : b) : a || b) || nearest(f);
         if (im) ctx.drawImage(im, dx, dy, dw, dh);
       }
     }
     new ResizeObserver(measure).observe(canvas);
     measure();
 
-    /* --- loader: count up as the first frames arrive, then light the lamp --- */
+    /* --- loader: a kolam draws itself as the first frames arrive; the Ganpati appears at its centre,
+           then the kolam opens out and fades, revealing the door --- */
+    const kLines = $$('.kl', loader);
+    const kDots = $$('.kl-dots circle', loader);
+    const kolamSvg = $('.loader-kolam', loader);
+    const ganpati = $('.loader-ganpati', loader);
+    gsap.set(kLines, { drawSVG: '0%' });
+    gsap.set(ganpati, { autoAlpha: 0, scale: 0.85, transformOrigin: '50% 50%' });
+    // the dots are laid first, like the pulli before a kolam is drawn
+    gsap.from(kDots, { scale: 0, autoAlpha: 0, transformOrigin: '50% 50%', duration: 0.5, ease: 'back.out(2)', stagger: { each: 0.012, from: 'random' } });
     const shown = { v: 0 };
     let target = 5;
     function bump(to) {
       target = Math.max(target, to);
-      gsap.to(shown, { v: target, duration: 0.5, ease: 'power1.out', overwrite: true,
-        onUpdate: () => (num.textContent = String(Math.round(shown.v)).padStart(3, '0')) });
+      gsap.to(shown, { v: target, duration: 0.8, ease: 'power1.out', overwrite: true,
+        onUpdate: () => gsap.set(kLines, { drawSVG: `${shown.v * 0.9}%` }) });
     }
     bump(10);
     const fonts = document.fonts ? document.fonts.ready : Promise.resolve();
     const ready = Promise.race([
-      Promise.all([batchReady, fonts, new Promise((r) => setTimeout(r, 1200))]),
+      Promise.all([batchReady, fonts, new Promise((r) => setTimeout(r, 1600))]),
       new Promise((r) => setTimeout(r, 7000)),
     ]);
 
     ready.then(() => {
-      bump(100);
+      gsap.killTweensOf(shown);
       measure();
-      gsap.timeline({ delay: 0.5 })
-        .to('.loader-flames', { scaleY: 1, opacity: 1, duration: 0.5, ease: 'back.out(3)' })
-        .to('.loader-note', { opacity: 0, duration: 0.2 }, '<')
-        .to(loader, { yPercent: -100, duration: 1, ease: 'power3.inOut' }, '+=0.35')
+      gsap.timeline({ delay: 0.2 })
+        .to(kLines, { drawSVG: '100%', duration: 0.7, ease: 'power2.out' })
+        .to(ganpati, { autoAlpha: 1, scale: 1, duration: 0.7, ease: 'power2.out' }, '-=0.2')
+        .to(kolamSvg, { scale: 1.35, autoAlpha: 0, duration: 1.1, ease: 'power2.in', transformOrigin: '50% 50%' }, '+=0.45')
+        .to(loader, { autoAlpha: 0, duration: 0.9, ease: 'power1.inOut' }, '-=0.6')
         .add(() => {
           document.body.classList.remove('is-loading');
           lenis.start();
-        }, '-=0.3')
-        .from('.hero-intro > *', { y: 30, autoAlpha: 0, stagger: 0.1, duration: 0.9, ease: 'power3.out' }, '-=0.45')
-        .from(canvas, { autoAlpha: 0, y: 30, duration: 1, ease: 'power3.out' }, '<0.1')
+        }, '-=0.5')
+        .from('.hero-intro > *', { y: 24, autoAlpha: 0, stagger: 0.1, duration: 0.9, ease: 'power3.out' }, '-=0.5')
+        .from(canvas, { autoAlpha: 0, scale: 0.97, duration: 1.1, ease: 'power3.out' }, '<0.1')
         .from('.door-cue', { autoAlpha: 0, y: 10, duration: 0.6 }, '-=0.4')
         .add(() => loader.remove());
     });

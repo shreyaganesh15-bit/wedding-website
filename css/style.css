@@ -2611,6 +2611,33 @@ body:not(#_) .site-footer .footer-kolam { display: block; width: var(--kw); max-
 .footer-kolam-wrap.is-left .footer-kolam { transform: translateX(-50%); }
 .site-footer { --kw: clamp(130px, 22vw, 300px); }
 
+/* the sunset section's own background is navy (for its night end); at the very top it is white like
+   the first band, so a sub-pixel gap on iPhones never shows as a dark line after the timeline */
+body:not(#_) .dusk { background: linear-gradient(#FFFFFF 0, #FFFFFF 20%, #0A1F4A 20%); }
+
+/* gallery: the carousel clips sideways for the drift, which also clipped the prints' soft shadows at
+   its top and bottom; give it generous room above and below (and pull the spacing back with
+   negative margins) so the shadows fade out fully */
+body:not(#_) .carousel { padding-block: 100px 120px; margin-block: -60px -70px; }
+
+/* buttons: Agraham's long g / y tails were hanging through the inner hairline. The label is lifted
+   and sized so its tails stay inside, the buttons are a touch taller, and paired buttons share one
+   width so they line up. */
+body:not(#_) .invite-btn, body:not(#_) .invite-actions .invite-btn, body:not(#_) .find-actions .invite-btn { height: 68px; font-size: 1rem; }
+body:not(#_) .invite-btn .invite-btn-label { padding: 0; line-height: 1; transform: translateY(-.2em); }
+body:not(#_) .invite-btn { white-space: nowrap; padding: 0 30px; }
+/* side by side, both as wide as the longer label */
+body:not(#_) .find-actions, body:not(#_) .invite-actions {
+  display: inline-grid; grid-auto-flow: column; grid-auto-columns: 1fr; grid-template-columns: none; gap: 14px; width: auto;
+}
+body:not(#_) .find-actions .invite-btn, body:not(#_) .invite-actions .invite-btn { width: 100%; }
+@media (max-width: 900px) {
+  body:not(#_) .find-actions, body:not(#_) .invite-actions { display: grid; grid-auto-flow: row; grid-auto-columns: auto; width: min(360px, 100%); margin-inline: auto; }
+}
+
+/* keep "big day." together so the footer heading breaks as "See you on our / big day." */
+.footer-line .nowrap { white-space: nowrap; }
+
 /* ==========================================================================
    Desktop type audit (701px and up). Sizes below are what the text LOOKS like; Helvetica is
    scaled by font-size-adjust, so the CSS values are larger (css = look / 0.812).

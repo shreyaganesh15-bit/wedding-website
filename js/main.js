@@ -4,6 +4,13 @@
   const $$ = (s, c = document) => [...c.querySelectorAll(s)];
   const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   const gsap = window.gsap;
+
+  // a refresh always starts at the hero: no restored scroll position, no jump to a #section
+  if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
+  if (location.hash) history.replaceState(null, '', location.pathname + location.search);
+  window.scrollTo(0, 0);
+  window.addEventListener('beforeunload', () => window.scrollTo(0, 0));
+
   // "Story mode" = the scroll-driven version. Falls back to the static page if
   // motion is reduced or the animation libraries didn't load.
   const story = root.classList.contains('story') && !!(gsap && window.ScrollTrigger && window.DrawSVGPlugin && window.Lenis);

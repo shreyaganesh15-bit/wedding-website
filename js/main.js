@@ -425,6 +425,9 @@
     const items = $$('.moment', stage);
     const n = items.length;
     const ring = $('.dial-ring', stage);
+    // the faint kolam in the disc: turns with the medallions, like one wheel
+    ring.insertAdjacentHTML('beforeend', '<div class="dial-kolam" aria-hidden="true"><i></i></div>');
+    const kolam = $('.dial-kolam i', ring);
     const medsBox = $('.dial-meds', stage);
     const sun = $('.dial-sun', stage);
     const rays = $('.dial-rays', stage);
@@ -481,12 +484,12 @@
       const phone = W < 700;
       const headBottom = head ? head.offsetTop + head.offsetHeight : H * 0.2;
       // centre the circle + words in the space between the title and the progress dots
-      const textGap = phone ? 56 : 58;
+      const textGap = phone ? 26 : 30;   // the words sit just under the circle
       const room = H - 52 - headBottom;                       // 52 ≈ dots + breathing room at the bottom
       const minPad = phone ? 20 : 20;
       // the words under the circle are only a little wider than the circle itself; the circle
       // shrinks when the words need the room (text height depends on its width, so settle twice)
-      let med = phone ? Math.min(W * 0.8, 330, H * 0.4) : Math.min(340, H * 0.4);
+      let med = phone ? Math.min(W * 0.84, 360, H * 0.46) : Math.min(440, H * 0.5);
       let textH = 0;
       for (let k = 0; k < 2; k++) {
         stage.style.setProperty('--text-w', `${Math.round(Math.max(med * 1.35, phone ? 280 : 340))}px`);
@@ -530,6 +533,7 @@
       const { R, cx, cy, med, step } = geo;
       const pos = state.pos;
       rays.style.transform = `rotate(${pos * 45}deg)`;
+      kolam.style.transform = `rotate(${-pos * step}deg)`;
       meds.forEach((m, i) => {
         const d = i - pos;
         const ad = Math.abs(d);

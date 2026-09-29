@@ -259,6 +259,13 @@
     let batchLoaded = 0;
     let batchDone;
     const batchReady = new Promise((r) => (batchDone = r));
+    // the loader waits until most of the film (80% of its frames) is in, so the first scroll is smooth
+    // even on a slow phone; the rest keeps loading in the background
+    const MOST = Math.ceil(order.length * 0.8);
+    let settled = 0;
+    let mostDone;
+    const mostReady = new Promise((r) => (mostDone = r));
+    const tick = () => { if (++settled === MOST) mostDone(); };
 
     const load = (i) => new Promise((res) => {
       const im = new Image();
@@ -268,9 +275,10 @@
         imgs[i] = im;
         if (firstBatch.has(i) && ++batchLoaded === firstBatch.size) batchDone();
         if (i === 0 || !document.body.classList.contains('is-loading')) render();
+        tick();
         res();
       });
-      im.onerror = () => { if (firstBatch.has(i) && ++batchLoaded === firstBatch.size) batchDone(); res(); };
+      im.onerror = () => { if (firstBatch.has(i) && ++batchLoaded === firstBatch.size) batchDone(); tick(); res(); };
       im.src = src(i);
     });
     let next = 0;
@@ -384,9 +392,10 @@
       breathe = gsap.to(kolamSvg, { scale: 1.025, duration: 1.3, ease: 'sine.inOut', yoyo: true, repeat: -1, transformOrigin: '50% 50%' });
     });
     const fonts = document.fonts ? document.fonts.ready : Promise.resolve();
+    // never keep a guest waiting more than 15 seconds, however slow the connection
     const loaded = Promise.race([
-      Promise.all([batchReady, fonts]),
-      new Promise((r) => setTimeout(r, 7000)),
+      Promise.all([batchReady, mostReady, fonts]),
+      new Promise((r) => setTimeout(r, 15000)),
     ]);
 
     Promise.all([loaded, drawn]).then(() => {

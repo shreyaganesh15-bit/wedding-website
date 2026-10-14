@@ -654,11 +654,11 @@
       const headBottom = head ? head.offsetTop + head.offsetHeight : H * 0.2;
       // centre the circle + words in the space between the title and the progress dots
       const textGap = phone ? 26 : (H < 820 ? 28 : 40);   // breathing room between the circle and its words
-      const dotsGap = phone ? 16 : 30;                          // gap under the words
-      const DOTS = dotsGap + (phone ? 38 : 44);                // + the arrows row
+      const dotsGap = phone ? 16 : (H < 820 ? 18 : 30);                          // gap under the words
+      const DOTS = dotsGap + (phone ? 38 : 40);                // + the arrows row
       const room = H - (phone ? 10 : 20) - headBottom;          // breathing room at the bottom
-      const minPad = phone ? 18 : 28;   // space above the dots
-      const topPad = phone ? 44 : Math.round(Math.min(56, Math.max(28, H * 0.06)));   // space between the intro text and the circle
+      const minPad = phone ? 18 : (H < 820 ? 14 : 28);   // space below the arrows
+      const topPad = phone ? 44 : H < 820 ? Math.round(Math.max(24, H * 0.05)) : Math.round(Math.min(56, Math.max(28, H * 0.06)));   // space between the intro text and the circle
       // the words under the circle are only a little wider than the circle itself; the circle
       // shrinks when the words need the room (text height depends on its width, so settle twice)
       let med = phone ? Math.min(W * 0.72, 300, H * 0.38) : Math.min(400, H * 0.44);

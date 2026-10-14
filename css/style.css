@@ -2691,7 +2691,13 @@ html.lenis { scroll-behavior: auto !important; }
 html { scrollbar-gutter: stable; }
 /* short laptop screens (Windows at 125-150% scaling is often ~730px tall): the dial no longer pins, so
    it may be a little taller than the window rather than squeeze the circles */
-@media (min-width: 701px) { .story .moments-stage.is-dial { min-height: 760px; } }
+/* short laptop screens (Windows at 125-150% scaling is often ~700px tall): a tighter title block so
+   the circle, its words and the arrows all fit in one screen */
+@media (min-width: 701px) and (max-height: 820px) {
+  body:not(#_) .is-dial .dial-head { top: clamp(20px, 3.5vh, 36px); }
+  body:not(#_) .is-dial .dial-head .h2 { font-size: min(3rem, calc((var(--pw, 100vw) - 240px) / 21.5)); margin-bottom: .35em; }
+  body:not(#_) .is-dial .dial-head .lede { font-size: 1.15rem; line-height: 1.45; max-width: 64ch; }
+}
 
 /* gallery: the drift is driven from JavaScript (so it can be dragged and swiped) */
 .carousel.is-js .carousel-track { animation: none; will-change: transform; }

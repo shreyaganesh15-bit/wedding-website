@@ -5,6 +5,12 @@
   const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   const gsap = window.gsap;
 
+  // --pw: the page's width without the scrollbar (100vw includes it on Windows, which pushes
+  // full-bleed pieces off centre)
+  const setPw = () => root.style.setProperty('--pw', root.clientWidth + 'px');
+  setPw();
+  new ResizeObserver(setPw).observe(root);
+
   // a refresh always starts at the hero: no restored scroll position, no jump to a #section
   if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
   if (location.hash) history.replaceState(null, '', location.pathname + location.search);
@@ -134,10 +140,71 @@
       const a = document.activeElement;
       if (a && carousel.contains(a) && !a.matches(':focus-visible')) a.blur();
     });
-    // touch: pause while a finger is down, resume a moment after
-    let resumeT = 0;
-    carousel.addEventListener('touchstart', () => { clearTimeout(resumeT); carousel.classList.add('is-paused'); }, { passive: true });
-    carousel.addEventListener('touchend', () => { resumeT = setTimeout(() => { if (!viewer.open) carousel.classList.remove('is-paused'); }, 1500); }, { passive: true });
+    /* The drift runs here rather than in CSS, so a finger (or a mouse) can drag the prints along and
+       fling them. It pauses only while the pointer rests on a print, or a finger is down, not
+       whenever the cursor is somewhere in the section. */
+    if (!reduceMotion) {
+      carousel.classList.add('is-js');
+      let x = 0, loop = 0, vel = 0, onPrint = false, down = null, dragged = false, resumeAt = 0, seen = true;
+      let last = performance.now();
+      const measureLoop = () => {
+        const items = track.children, first = items[0], twin = items[originals.length];
+        loop = first && twin ? twin.offsetLeft - first.offsetLeft : 0;
+      };
+      measureLoop();
+      new ResizeObserver(measureLoop).observe(track);
+      window.addEventListener('load', measureLoop);
+      new IntersectionObserver(([e]) => { seen = e.isIntersecting; }).observe(carousel);
+      const speed = () => loop / (window.innerWidth <= 700 ? 55 : 70);   // one full set every 55 to 70 s
+      const frame = (now) => {
+        const dt = Math.min(0.1, (now - last) / 1000);
+        last = now;
+        if (seen && loop > 0) {
+          if (!down) {
+            if (Math.abs(vel) > 5) { x += vel * dt; vel *= Math.pow(0.05, dt); }       // a fling slows to a stop
+            else if (!onPrint && !viewer.open && now > resumeAt) x += speed() * dt;
+          }
+          x = ((x % loop) + loop) % loop;
+          track.style.transform = `translate3d(${-x}px, 0, 0)`;
+        }
+        requestAnimationFrame(frame);
+      };
+      requestAnimationFrame(frame);
+
+      // a mouse resting on a photo pauses it; anywhere else in the section it keeps drifting
+      carousel.addEventListener('pointerover', (e) => { if (e.pointerType === 'mouse') onPrint = !!e.target.closest('.print'); });
+      carousel.addEventListener('pointerleave', () => { onPrint = false; });
+
+      // drag or swipe sideways; a vertical swipe still scrolls the page (touch-action: pan-y)
+      carousel.addEventListener('pointerdown', (e) => {
+        if (e.button !== 0) return;
+        down = { id: e.pointerId, sx: e.clientX, x0: x, lx: e.clientX, lt: e.timeStamp };
+        dragged = false; vel = 0;
+      });
+      carousel.addEventListener('pointermove', (e) => {
+        if (!down || e.pointerId !== down.id) return;
+        const dx = e.clientX - down.sx;
+        if (!dragged && Math.abs(dx) > 6) { dragged = true; try { carousel.setPointerCapture(e.pointerId); } catch (_) {} carousel.classList.add('is-dragging'); }
+        if (!dragged) return;
+        x = down.x0 - dx;
+        const dt = (e.timeStamp - down.lt) / 1000;
+        if (dt > 0) vel = -(e.clientX - down.lx) / dt;
+        down.lx = e.clientX; down.lt = e.timeStamp;
+      });
+      const release = (e) => {
+        if (!down || e.pointerId !== down.id) return;
+        if (e.timeStamp - down.lt > 80) vel = 0;                      // held still before letting go
+        vel = Math.max(-3000, Math.min(3000, vel));
+        down = null;
+        carousel.classList.remove('is-dragging');
+        if (e.pointerType !== 'mouse') resumeAt = performance.now() + 1500;
+      };
+      carousel.addEventListener('pointerup', release);
+      carousel.addEventListener('pointercancel', (e) => { vel = 0; release(e); });
+      // a drag is not a tap: don't open the photo when the finger or mouse lets go after dragging
+      carousel.addEventListener('click', (e) => { if (dragged) { e.preventDefault(); e.stopPropagation(); dragged = false; } }, true);
+      $$('img', carousel).forEach((img) => { img.draggable = false; });
+    }
   }
 
   /* ---------- Footer countdown to the Muhurtham: 16 November 2026, 9:00 AM India time ---------- */
@@ -311,6 +378,30 @@
       return null;
     };
 
+    // the words must sit between the garland and the red band with room to spare; where the screen's
+    // shape leaves too little height (tablets, narrow windows), scale the whole block down to fit
+    const BAND_GAP = 24;
+    function fitCopy() {
+      const c = $('.hero-copy', hero);
+      if (!c) return;
+      // zoom the pieces, not the block: zoom on the block would scale its own top offset too
+      const kids = [...c.children];
+      kids.forEach((k) => { k.style.zoom = ''; });
+      const h = c.offsetHeight;
+      hero.style.setProperty('--copy-h', h + 'px');
+      const cs = getComputedStyle(hero);
+      const band = parseFloat(cs.getPropertyValue('--art-band'));
+      if (!band) return;
+      const narrow = window.matchMedia('(max-width: 760px)').matches;
+      const top = parseFloat(cs.getPropertyValue('--art-top')) + (narrow ? 10 : 8);
+      const fit = Math.min(1, (band - (narrow ? 18 : BAND_GAP) - top) / h);
+      if (fit < 1) {
+        const z = Math.max(0.6, fit).toFixed(3);
+        kids.forEach((k) => { k.style.zoom = z; });
+        hero.style.setProperty('--copy-h', c.offsetHeight + 'px');
+      }
+    }
+
     function measure() {
       const dpr = Math.min(window.devicePixelRatio || 1, 2);
       W = canvas.clientWidth;
@@ -323,6 +414,8 @@
       const hr = hero.getBoundingClientRect();
       introBottom = intro.getBoundingClientRect().bottom - hr.top;
       hero.style.setProperty('--art-h', H + 'px');
+      // the words' own height, so they can be centred between the garland and the red band
+      requestAnimationFrame(fitCopy);
       render();
     }
 
@@ -332,7 +425,7 @@
     const P_FULL = P_START + (P_END - P_START) * (FULL_BLEED_FRAME / (FRAMES - 1));
 
     const MANDAP_CX = 665 / 1280;   // measured on the last frame: posts at ~329 and ~1001 of 1280
-    let lastShift = null;
+    let lastShift = null, lastArt = null;
     function render() {
       if (!W) return;
       const p = state.p;
@@ -358,6 +451,15 @@
       const yCov = (H - IH * sCov) / 2;
       const shift = Math.round(xCov + cx * IW * sCov - W / 2);
       if (shift !== lastShift) { hero.style.setProperty('--mandap-x', shift + 'px'); lastShift = shift; }
+      // where the garland ends, where the red band starts and how far apart the pillars stand, on
+      // screen (measured on the frame the film stops at), so the words sit inside the mandapam
+      const artKey = `${Math.round(yCov)}|${Math.round(sCov * 1000)}`;
+      if (artKey !== lastArt) {
+        lastArt = artKey;
+        hero.style.setProperty('--art-top', Math.round(yCov + 0.262 * IH * sCov) + 'px');
+        hero.style.setProperty('--art-band', Math.round(yCov + 0.672 * IH * sCov) + 'px');
+        hero.style.setProperty('--art-w', Math.round(0.4 * IW * sCov) + 'px');
+      }
 
       const sc = lerp(sFit, sCov, e);
       ctx.fillStyle = '#FCFCFC'; // the film's own paper white, so the frame edges disappear
@@ -551,12 +653,12 @@
       const phone = W < 700;
       const headBottom = head ? head.offsetTop + head.offsetHeight : H * 0.2;
       // centre the circle + words in the space between the title and the progress dots
-      const textGap = phone ? 26 : 40;   // breathing room between the circle and its words
+      const textGap = phone ? 26 : (H < 820 ? 28 : 40);   // breathing room between the circle and its words
       const dotsGap = phone ? 16 : 30;                          // gap under the words
       const DOTS = dotsGap + (phone ? 38 : 44);                // + the arrows row
       const room = H - (phone ? 10 : 20) - headBottom;          // breathing room at the bottom
       const minPad = phone ? 18 : 28;   // space above the dots
-      const topPad = phone ? 44 : 56;   // space between the intro text and the circle
+      const topPad = phone ? 44 : Math.round(Math.min(56, Math.max(28, H * 0.06)));   // space between the intro text and the circle
       // the words under the circle are only a little wider than the circle itself; the circle
       // shrinks when the words need the room (text height depends on its width, so settle twice)
       let med = phone ? Math.min(W * 0.72, 300, H * 0.38) : Math.min(400, H * 0.44);
@@ -567,6 +669,14 @@
         med = Math.max(phone ? 150 : 170, Math.min(med, room - textGap - textH - DOTS - topPad - minPad));
       }
       const group = med + textGap + textH + DOTS;
+      // never cut the words or the arrows off: if the window is too short for them, the scene grows
+      // taller than the window instead (it no longer pins, so that only means a little more scroll)
+      const need = Math.ceil(headBottom + topPad + group + minPad + (phone ? 10 : 20));
+      const curMin = parseFloat(stage.style.minHeight) || 0;
+      if (need > H + 1 || (curMin && need < curMin - 1)) {
+        stage.style.minHeight = need > H + 1 || need > window.innerHeight ? `${need}px` : '';
+        if (stage.clientHeight !== H) return;   // the ResizeObserver lays it out again at the new height
+      }
       const topY = headBottom + topPad + Math.max(0, (room - group - topPad - minPad) / 2) + med / 2;
       // the half-circle rises from just below the bottom edge up to the medallions' path
       const R = H + (phone ? 24 : 60) - topY;

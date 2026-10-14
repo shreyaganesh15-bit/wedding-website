@@ -653,7 +653,7 @@
       const phone = W < 700;
       const headBottom = head ? head.offsetTop + head.offsetHeight : H * 0.2;
       // centre the circle + words in the space between the title and the progress dots
-      const textGap = phone ? 26 : (H < 820 ? 28 : 40);   // breathing room between the circle and its words
+      const textGap = phone ? 26 : (H < 700 ? 20 : H < 820 ? 28 : 40);   // breathing room between the circle and its words
       const dotsGap = phone ? 16 : (H < 820 ? 18 : 30);                          // gap under the words
       const DOTS = dotsGap + (phone ? 38 : 40);                // + the arrows row
       const room = H - (phone ? 10 : 20) - headBottom;          // breathing room at the bottom
@@ -666,7 +666,7 @@
       for (let k = 0; k < 2; k++) {
         stage.style.setProperty('--text-w', `${Math.round(Math.max(med * 1.35, phone ? 280 : 340))}px`);
         textH = Math.max(...items.map((li) => li.offsetHeight));
-        med = Math.max(phone ? 150 : 170, Math.min(med, room - textGap - textH - DOTS - topPad - minPad));
+        med = Math.max(phone ? 150 : H < 700 ? 130 : 170, Math.min(med, room - textGap - textH - DOTS - topPad - minPad));
       }
       const group = med + textGap + textH + DOTS;
       // never cut the words or the arrows off: if the window is too short for them, the scene grows
@@ -690,6 +690,10 @@
       ring.style.height = `${R}px`;
       ring.style.left = `${geo.cx - R}px`;
       ring.style.top = `${geo.cy - R}px`;
+      // fade the half-circle out before the bottom of the scene, so the next section never slices it
+      const fadeEnd = Math.max(40, H - topY - (phone ? 30 : 24));
+      ring.style.setProperty('--fade-end', `${Math.round(fadeEnd)}px`);
+      ring.style.setProperty('--fade-start', `${Math.round(Math.max(0, fadeEnd - (phone ? 200 : 240)))}px`);
       medsBox.style.setProperty('--med', `${med}px`);
       sun.style.left = `${geo.cx}px`;
       sun.style.top = `${topY - med / 2 - (phone ? 18 : 26)}px`;
